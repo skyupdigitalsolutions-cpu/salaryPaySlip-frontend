@@ -45,7 +45,7 @@ const logout = async () => {
 };
 
 // ─── REAL BACKEND API ──────────────────────────────────────────────────────
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://salarypayslip-backend.onrender.com";
 
 async function fetchEmployee(id) {
   if (!id || id.trim().length < 3) return null;
