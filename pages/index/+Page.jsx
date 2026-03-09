@@ -653,7 +653,6 @@ export default function Page() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [fetchStatus, setFetchStatus] = useState("idle");
   const [isNewJoinee, setIsNewJoinee] = useState(false);
-  // ── NEW: tracks whether the new-joinee was entered via the modal (allowed) ──
   const [isNewJoineeViaModal, setIsNewJoineeViaModal] = useState(false);
   const [toast, setToast] = useState(null);
   const [showNewEmpModal, setShowNewEmpModal] = useState(false);
@@ -666,7 +665,7 @@ export default function Page() {
   const previewRef = useRef(null);
   const newEmpIdRef = useRef(null);
 
- useEffect(() => {
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const token = getToken();
@@ -728,7 +727,6 @@ export default function Page() {
       return;
     }
 
-    // If this ID was set via the modal, don't re-trigger the lookup flow
     if (isNewJoineeViaModal) return;
 
     setFetchStatus("loading");
@@ -744,7 +742,6 @@ export default function Page() {
         setIsNewJoinee(false);
         setIsNewJoineeViaModal(false);
       } else {
-        // Not found via direct typing — clear fields but DO NOT allow editing
         [
           "employeeName",
           "designation",
@@ -777,7 +774,6 @@ export default function Page() {
     else if (lopDays === 0) formik.setFieldValue("lossOfPay", 0, false);
   }, [formik.values.basicSalary, formik.values.payDays, formik.values.lopDays]);
 
-  // ── Modal: proceed with new employee ──────────────────────────────────────
   const handleNewEmployeeProceed = () => {
     const id = newEmpIdInput.trim().toUpperCase();
     if (!id) {
@@ -794,7 +790,7 @@ export default function Page() {
       formik.resetForm({ values: { ...defaultValues, employeeId: id } });
       setFetchStatus("notfound");
       setIsNewJoinee(true);
-      setIsNewJoineeViaModal(true); // ← key flag: came via modal, editing allowed
+      setIsNewJoineeViaModal(true);
       setShowPreview(false);
       setShowNewEmpModal(false);
       setNewEmpIdInput("");
@@ -804,7 +800,6 @@ export default function Page() {
   };
 
   const handlePreview = async () => {
-    // Block preview if employee ID not found and not entered via modal
     if (fetchStatus === "notfound" && !isNewJoineeViaModal) {
       showToast("❌ Employee ID not found.");
       return;
@@ -827,7 +822,6 @@ export default function Page() {
   };
 
   const handleGeneratePDF = async () => {
-    // Block PDF generation if employee not found and not via modal
     if (fetchStatus === "notfound" && !isNewJoineeViaModal) {
       showToast("❌ Employee ID not found.");
       return;
@@ -930,7 +924,6 @@ export default function Page() {
 
   const field = (name, label, type = "text", alwaysEditable = false) => {
     const isAutoField = AUTO_FIELDS.includes(name);
-    // Read-only if: it's an auto field AND (not new joinee via modal) AND not forced editable
     const readOnly = isAutoField && !isNewJoineeViaModal && !alwaysEditable;
     const isNewEntry = isAutoField && isNewJoinee && isNewJoineeViaModal;
     return (
@@ -977,7 +970,6 @@ export default function Page() {
   const ded = Number(formik.values.lossOfPay) || 0;
   const net = earn - ded;
 
-  // Derived: is this a "typed but not found" state (not via modal)?
   const isUnknownId = fetchStatus === "notfound" && !isNewJoineeViaModal;
 
   if (!authChecked) {
@@ -1249,48 +1241,8 @@ export default function Page() {
         </h2>
         <form onSubmit={formik.handleSubmit}>
           <div className="form-card bg-[#FFFFFF] rounded-lg w-full md:w-[1000px] px-4 ml-[100px] md:px-[90px] shadow-xl p-4 md:p-8 space-y-6">
-            {/* ── UNKNOWN ID ALERT — shown when typed ID is not in DB ── */}
-            {/* {isUnknownId && (
-              <div className="unknown-id-alert flex items-start gap-3 bg-red-50 border-2 border-red-400 rounded-xl px-4 py-4">
-                <div className="flex-shrink-0 w-9 h-9 bg-red-500 rounded-full flex items-center justify-center mt-0.5">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-red-700 font-bold text-sm">Employee ID Not Found</p>
-                  <p className="text-red-600 text-xs mt-1 leading-relaxed">
-                    The Employee ID <strong className="font-mono bg-red-100 px-1 py-0.5 rounded">{formik.values.employeeId}</strong> does not exist in the database.
-                    Employee details and email cannot be entered here directly.
-                  </p>
-                  <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-                    <span className="text-red-500 text-xs font-medium">To register a new employee:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewEmpIdInput(formik.values.employeeId);
-                        setNewEmpIdError("");
-                        setShowNewEmpModal(true);
-                        setTimeout(() => newEmpIdRef.current?.focus(), 100);
-                      }}
-                      className="inline-flex items-center gap-1.5 bg-[#0037CA] hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200 shadow-sm hover:shadow"
-                    >
-                      <span className="relative flex-shrink-0">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                      </span>
-                      Use New Employee Button
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )} */}
 
-            {/* ── NEW JOINEE BANNER — shown only when entered via modal ── */}
+            {/* ── NEW JOINEE BANNER ── */}
             {isNewJoinee && isNewJoineeViaModal && (
               <div className="flex items-start gap-3 bg-[#0037CA] border border-blue-300 rounded-lg px-4 py-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mt-0.5">
@@ -1337,7 +1289,7 @@ export default function Page() {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   placeholder="e.g. EMP001"
-                  disabled={isNewJoinee && isNewJoineeViaModal} // lock ID once modal sets it
+                  disabled={isNewJoinee && isNewJoineeViaModal}
                   className={`w-full px-4 md:px-6 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 font-mono tracking-widest
                     ${
                       formik.touched.employeeId && formik.errors.employeeId
@@ -1427,7 +1379,7 @@ export default function Page() {
               {field("bankAcNo", "Bank A/C No")}
             </div>
 
-            {/* ── Email field with special unknown-ID treatment ── */}
+            {/* ── Email ── */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Employee Email
@@ -1448,15 +1400,15 @@ export default function Page() {
                     : "Auto-filled from Employee ID"
                 }
                 className={`w-full px-4 md:px-8 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors
-      ${
-        formik.touched.email && formik.errors.email
-          ? "border-red-500 focus:ring-red-500"
-          : !isNewJoineeViaModal && fetchStatus === "found"
-            ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
-            : isNewJoineeViaModal
-              ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
-              : "border-gray-300 focus:ring-indigo-500"
-      }`}
+                  ${
+                    formik.touched.email && formik.errors.email
+                      ? "border-red-500 focus:ring-red-500"
+                      : !isNewJoineeViaModal && fetchStatus === "found"
+                        ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
+                        : isNewJoineeViaModal
+                          ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
+                          : "border-gray-300 focus:ring-indigo-500"
+                  }`}
               />
               {formik.touched.email && formik.errors.email && (
                 <p className="text-red-500 text-xs mt-0.5">
@@ -1495,12 +1447,7 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {field("basicSalary", "Basic Salary (₹)", "number", true)}
                 {field("incentivePay", "Incentive Pay (₹)", "number", true)}
-                {field(
-                  "travelAllowance",
-                  "Travel Allowance (₹)",
-                  "number",
-                  true,
-                )}
+                {field("travelAllowance", "Travel Allowance (₹)", "number", true)}
               </div>
             </div>
 
@@ -1580,7 +1527,6 @@ export default function Page() {
               </button>
             </div>
 
-            {/* ── Bottom hint when ID is unknown ── */}
             {isUnknownId && (
               <div className="text-center py-1">
                 <p className="text-xs text-gray-400">
