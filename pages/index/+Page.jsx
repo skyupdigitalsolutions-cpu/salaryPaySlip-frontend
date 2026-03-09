@@ -839,13 +839,13 @@ export default function Page() {
       }
 
       const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
+      
       const element = receiptRef.current;
       if (!element) throw new Error("Receipt element not found.");
       await new Promise((r) => setTimeout(r, 300));
 
       const canvas = await html2canvas(element, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
@@ -853,14 +853,13 @@ export default function Page() {
         height: 1123,
       });
 
-     const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
 const { jsPDF } = await import("jspdf");
 const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
 const name = (formik.values.employeeName || "Employee").replace(/\s+/g, "_");
 const month = formik.values.payMonth || "Slip";
 pdf.save(`Salary_Slip_${name}_${month}.pdf`);
-
       try {
         const result = await sendSalaryToBackend(
           { ...formik.values, slipImageData: imgData },
