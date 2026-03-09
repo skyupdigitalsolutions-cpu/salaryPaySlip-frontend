@@ -291,7 +291,7 @@ function SlipContent({ values, isNewJoinee }) {
     >
       <div style={{ textAlign: "center", marginBottom: "4px" }}>
         <img
-          src="../../assets/rbd-logo.webp"
+          src="/rbd-logo.webp"
           alt="Skyup Logo"
           style={{ width: "240px", display: "inline-block" }}
         />
