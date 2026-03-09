@@ -163,7 +163,7 @@ export default function Page() {
       }
       localStorage.setItem("admin_token", data.token);
       localStorage.setItem("admin_info", JSON.stringify(data.admin));
-      window.location.href = "/";
+      window.location.replace("/");
     } catch {
       setError("Unable to connect to server. Please try again.");
     } finally {
