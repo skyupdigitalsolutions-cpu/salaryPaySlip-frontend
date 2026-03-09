@@ -66,7 +66,7 @@ function LogoHero() {
       <div style={S.logoRing}>
         <div style={S.logoGlow} />
         <img
-          src="../../assets/SKYUP_Logo.png"
+          src="/assets/SKYUP_Logo.png"
           alt="SkyUp Digital"
           style={S.logoImg}
         />
