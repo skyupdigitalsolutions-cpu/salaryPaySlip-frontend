@@ -1016,7 +1016,7 @@ export default function Page() {
       <div className="no-print bg-white px-8 py-4 flex items-center gap-4 shadow-lg">
         <div className="w-22 h-38 flex items-center justify-center overflow-hidden flex-shrink-0 bg-white">
           <img
-            src="../../assets/rbd-logo.webp"
+            src="/assets/rbd-logo.webp"
             alt="Skyup Logo"
             className="w-[300px] h-25 object-contain"
           />
