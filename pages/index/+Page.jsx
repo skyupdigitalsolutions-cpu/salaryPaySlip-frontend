@@ -735,7 +735,7 @@ export default function Page() {
           <div className="form-card bg-[#FFFFFF] rounded-lg w-full md:w-[1000px] px-4 ml-[100px] md:px-[90px] shadow-xl p-4 md:p-8 space-y-6">
 
             {/* ── UNKNOWN ID ALERT — shown when typed ID is not in DB ── */}
-            {isUnknownId && (
+            {/* {isUnknownId && (
               <div className="unknown-id-alert flex items-start gap-3 bg-red-50 border-2 border-red-400 rounded-xl px-4 py-4">
                 <div className="flex-shrink-0 w-9 h-9 bg-red-500 rounded-full flex items-center justify-center mt-0.5">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -773,7 +773,7 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* ── NEW JOINEE BANNER — shown only when entered via modal ── */}
             {isNewJoinee && isNewJoineeViaModal && (
@@ -841,61 +841,24 @@ export default function Page() {
 
             {/* ── Email field with special unknown-ID treatment ── */}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Employee Email
-                <span className="ml-1.5 text-[9px] tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-semibold uppercase">Used to send PDF</span>
-              </label>
-              {isUnknownId ? (
-                // ── Locked email field with clear error message ──
-                <div>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      value=""
-                      readOnly
-                      placeholder="Employee not found — email unavailable"
-                      className="w-full px-4 md:px-8 py-2 text-sm border-2 border-red-300 bg-red-50 text-red-400 rounded-md cursor-not-allowed focus:outline-none"
-                    />
-                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1 font-medium">
-                    <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
-                    </svg>
-                    Invalid Employee ID — email cannot be entered. Use the{" "}
-                    <button
-                      type="button"
-                      onClick={() => { setNewEmpIdInput(formik.values.employeeId); setNewEmpIdError(""); setShowNewEmpModal(true); setTimeout(() => newEmpIdRef.current?.focus(), 100); }}
-                      className="underline text-red-600 hover:text-red-800 font-bold"
-                    >
-                      New Employee
-                    </button>
-                    {" "}button to register this ID.
-                  </p>
-                </div>
-              ) : (
-                // ── Normal email field ──
-                <div>
-                  <input
-                    type="email" name="email" value={formik.values.email}
-                    onChange={formik.handleChange} onBlur={formik.handleBlur}
-                    readOnly={!isNewJoineeViaModal && fetchStatus === "found"}
-                    placeholder={isNewJoineeViaModal ? "Enter employee email" : "Auto-filled from Employee ID"}
-                    className={`w-full px-4 md:px-8 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors
-                      ${formik.touched.email && formik.errors.email ? "border-red-500 focus:ring-red-500"
-                        : !isNewJoineeViaModal && fetchStatus === "found" ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
-                        : isNewJoineeViaModal ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
-                        : "border-gray-300 focus:ring-indigo-500"}`}
-                  />
-                  {formik.touched.email && formik.errors.email && <p className="text-red-500 text-xs mt-0.5">{formik.errors.email}</p>}
-                  {formik.values.email && <p className="text-blue-500 text-xs mt-0.5">📧 Salary slip will be sent to this address on PDF generation</p>}
-                </div>
-              )}
-            </div>
+  <label className="block text-xs font-medium text-gray-700 mb-1">
+    Employee Email
+    <span className="ml-1.5 text-[9px] tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-semibold uppercase">Used to send PDF</span>
+  </label>
+  <input
+    type="email" name="email" value={formik.values.email}
+    onChange={formik.handleChange} onBlur={formik.handleBlur}
+    readOnly={!isNewJoineeViaModal && fetchStatus === "found"}
+    placeholder={isNewJoineeViaModal ? "Enter employee email" : "Auto-filled from Employee ID"}
+    className={`w-full px-4 md:px-8 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors
+      ${formik.touched.email && formik.errors.email ? "border-red-500 focus:ring-red-500"
+        : !isNewJoineeViaModal && fetchStatus === "found" ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
+        : isNewJoineeViaModal ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
+        : "border-gray-300 focus:ring-indigo-500"}`}
+  />
+  {formik.touched.email && formik.errors.email && <p className="text-red-500 text-xs mt-0.5">{formik.errors.email}</p>}
+  {formik.values.email && <p className="text-blue-500 text-xs mt-0.5">📧 Salary slip will be sent to this address on PDF generation</p>}
+</div>
 
             <div className={isUnknownId ? "opacity-50 pointer-events-none select-none" : ""}>
               <h3 className="text-sm font-semibold text-gray-800 mb-2">Attendance</h3>

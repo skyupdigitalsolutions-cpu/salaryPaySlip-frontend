@@ -126,7 +126,7 @@ function InputField({
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function LoginPage() {
+export default function Page() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);

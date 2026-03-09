@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [
-    vike(),
+    vike({ prerender: false }),
     react(),
   ],
 });
