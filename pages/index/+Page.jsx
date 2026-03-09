@@ -671,11 +671,7 @@ export default function Page() {
 
     const token = getToken();
     if (!token) {
-<<<<<<< HEAD
-      window.location.href = "/login";
-=======
       window.location.replace("/login");
->>>>>>> bfb5de5 (solved rendering issue)
       return;
     }
     fetch(`${API_BASE}/api/auth/me`, {
@@ -684,11 +680,7 @@ export default function Page() {
       .then((res) => {
         if (!res.ok) {
           clearAuth();
-<<<<<<< HEAD
-          window.location.href = "/login";
-=======
           window.location.replace("/login");
->>>>>>> bfb5de5 (solved rendering issue)
           return null;
         }
         return res.json();
@@ -698,16 +690,9 @@ export default function Page() {
         if (data.success) {
           setAdminInfo(data.admin);
         }
-<<<<<<< HEAD
-        setAuthChecked(true); // ← always set true so page renders
-      })
-      .catch(() => {
-        // Backend unreachable — still show page, don't loop
-=======
         setAuthChecked(true);
       })
       .catch(() => {
->>>>>>> bfb5de5 (solved rendering issue)
         setAuthChecked(true);
       });
   }, []);
