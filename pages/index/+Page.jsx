@@ -845,7 +845,7 @@ export default function Page() {
       await new Promise((r) => setTimeout(r, 300));
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 4,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
