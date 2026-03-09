@@ -853,21 +853,14 @@ export default function Page() {
         height: 1123,
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-      pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+     const imgData = canvas.toDataURL("image/jpeg", 0.92);
+const name = (formik.values.employeeName || "Employee").replace(/\s+/g, "_");
+const month = formik.values.payMonth || "Slip";
 
-      const name = (formik.values.employeeName || "Employee").replace(
-        /\s+/g,
-        "_",
-      );
-      const month = formik.values.payMonth || "Slip";
-      pdf.save(`Salary_Slip_${name}_${month}.pdf`);
-
+const link = document.createElement("a");
+link.download = `Salary_Slip_${name}_${month}.jpg`;
+link.href = imgData;
+link.click();
       try {
         const result = await sendSalaryToBackend(
           { ...formik.values, slipImageData: imgData },
