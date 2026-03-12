@@ -1,5 +1,6 @@
 // pages/login/+Page.jsx
 import { useState, useEffect, useRef } from "react";
+import skyupLogo from "../../assets/SKYUP_Logo.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
@@ -61,15 +62,7 @@ function LogoHero() {
     <div style={S.logoHero}>
       <div style={S.logoRing}>
         <div style={S.logoGlow} />
-<<<<<<< HEAD
         <img src={skyupLogo} alt="SkyUp Digital" style={S.logoImg} />
-=======
-        <img
-          src="/SKYUP_Logo.png"
-          alt="SkyUp Digital"
-          style={S.logoImg}
-        />
->>>>>>> c407c15f1c640a24152ca1ea2c47b5cd7882d5f5
       </div>
       <div style={S.logoText}>
         <h1 style={S.brandTitle}>Skyup Digital Solutions</h1>
