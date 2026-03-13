@@ -76,6 +76,17 @@ async function saveEmployee(id, data) {
   return true;
 }
 
+async function updateEmployee(id, data) {
+  const res = await authFetch(`${API_BASE}/api/employees/${id.trim().toUpperCase()}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  if (!res) return false;
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "Failed to update employee");
+  return true;
+}
+
 async function sendSalaryToBackend(formData, isNewJoinee) {
   const res = await authFetch(`${API_BASE}/api/salary/send`, {
     method: "POST",
@@ -308,7 +319,7 @@ function SlipContent({ values, isNewJoinee }) {
           paddingBottom: "10px",
         }}
       >
-        SKYUP DIGITAL SOLUTIONS
+        SKYUP DIGITAL SOLUTIONS LLP
       </div>
 
       <div
@@ -560,11 +571,11 @@ function SlipContent({ values, isNewJoinee }) {
             COMPANY ADDRESS
           </div>
           <div style={{ lineHeight: "1.8", color: "#555", fontSize: "14px" }}>
-            Parinidhi #23, E Block, 14 A Main Road,
+            2nd Floor, No 23, E Block, Parindhi,
             <br />
-            2nd Floor, Sahakaranagar,
+            14A Dasarahalli Main Rd, Sahakar Nagar,
             <br />
-            Bangalore – 560092
+            Bengaluru, Karnataka 560092
           </div>
           <div style={{ marginTop: "5px" }}>
             <div
@@ -580,19 +591,22 @@ function SlipContent({ values, isNewJoinee }) {
               CONTACT DETAILS
             </div>
             <div style={{ lineHeight: "1.8", color: "#555", fontSize: "14px" }}>
-              +91 9538752960 | +91 9844104011
+              <strong>mobile –</strong> +91 8867867775
               <br />
-              <strong>Email –</strong> contact@skyupdigital.com
+              <strong>Email –</strong>contact@skyupdigitalsolutions.com
             </div>
           </div>
         </div>
 
+        {/* ── FIXED: Signature area — properly sized and positioned ── */}
         <div
           style={{
             width: "50%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            justifyContent: "flex-end",
+            paddingBottom: "8px",
           }}
         >
           <div
@@ -600,37 +614,60 @@ function SlipContent({ values, isNewJoinee }) {
               fontFamily: "Georgia,serif",
               fontSize: "24px",
               color: "#111",
-              marginBottom: "20px",
-              marginTop: "40px",
-              paddingTop: "35px",
+              marginBottom: "16px",
             }}
           >
             Thank You
           </div>
+
           <div
             style={{
               textAlign: "center",
-              paddingTop: "1px",
               fontSize: "14px",
               letterSpacing: "1px",
               textTransform: "uppercase",
               color: "#124aa3",
+              width: "100%",
             }}
           >
-            <div style={{ fontSize: "14px", opacity: 0.7 }}>
-              {" "}
-              For SKYUP DIGITAL SOLUTIONS
+            <div style={{ fontSize: "14px", opacity: 0.7, marginBottom: "6px" }}>
+              For SKYUP DIGITAL SOLUTIONS LLP
             </div>
+
+            {/* Signature image — fixed: constrained size, no overflow */}
             <div
               style={{
-                fontSize: "14px",
-                opacity: 0.7,
-                marginTop: "0px",
-                marginBottom: "5px",
-                paddingTop: "20px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "60px",
+                marginBottom: "3px",
               }}
             >
-              Partner
+              <img
+                src="/sign.webp"
+                alt="Signature"
+                style={{
+                  maxHeight: "50px",
+                  maxWidth: "170px",
+                  width: "auto",
+                  height: "auto",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                borderTop: "1px solid #ccc",
+                width: "180px",
+                margin: "0 auto 6px auto",
+              }}
+            />
+
+            <div style={{ fontSize: "14px", opacity: 0.7 }}>
+              Managing Director
             </div>
           </div>
         </div>
@@ -646,6 +683,8 @@ export default function Page() {
   const [fetchStatus, setFetchStatus] = useState("idle");
   const [isNewJoinee, setIsNewJoinee] = useState(false);
   const [isNewJoineeViaModal, setIsNewJoineeViaModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // ← NEW: edit mode for fetched employees
+  const [isSavingEdit, setIsSavingEdit] = useState(false); // ← NEW: saving state
   const [toast, setToast] = useState(null);
   const [showNewEmpModal, setShowNewEmpModal] = useState(false);
   const [newEmpIdInput, setNewEmpIdInput] = useState("");
@@ -705,6 +744,7 @@ export default function Page() {
       setFetchStatus("idle");
       setIsNewJoinee(false);
       setIsNewJoineeViaModal(false);
+      setIsEditMode(false); // reset edit mode on ID clear
       [
         "employeeName",
         "designation",
@@ -718,6 +758,7 @@ export default function Page() {
     }
     if (isNewJoineeViaModal) return;
     setFetchStatus("loading");
+    setIsEditMode(false); // reset edit mode when fetching new employee
     let cancelled = false;
     fetchEmployee(id).then((emp) => {
       if (cancelled) return;
@@ -779,12 +820,55 @@ export default function Page() {
       setFetchStatus("notfound");
       setIsNewJoinee(true);
       setIsNewJoineeViaModal(true);
+      setIsEditMode(false);
       setShowPreview(false);
       setShowNewEmpModal(false);
       setNewEmpIdInput("");
       setNewEmpIdError("");
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
+  };
+
+  // ── NEW: Save edited employee details to DB ──
+  const handleSaveEdit = async () => {
+    const AUTO_FIELDS = [
+      "employeeName",
+      "designation",
+      "department",
+      "dateOfJoining",
+      "bankName",
+      "bankAcNo",
+      "email",
+    ];
+    const editData = {};
+    AUTO_FIELDS.forEach((k) => { editData[k] = formik.values[k]; });
+
+    setIsSavingEdit(true);
+    try {
+      await updateEmployee(formik.values.employeeId, editData);
+      showToast("✅ Employee details updated successfully!");
+      setIsEditMode(false);
+    } catch (err) {
+      showToast(`❌ Failed to update: ${err.message}`, "error");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // ── NEW: Cancel edit — re-fetch original data ──
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    const id = formik.values.employeeId?.trim();
+    if (id && id.length >= 3) {
+      fetchEmployee(id).then((emp) => {
+        if (emp) {
+          Object.entries(emp).forEach(([k, v]) => {
+            formik.setFieldValue(k, v, false);
+            formik.setFieldTouched(k, false, false);
+          });
+        }
+      });
+    }
   };
 
   const handlePreview = async () => {
@@ -854,12 +938,12 @@ export default function Page() {
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
-const { jsPDF } = await import("jspdf");
-const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
-const name = (formik.values.employeeName || "Employee").replace(/\s+/g, "_");
-const month = formik.values.payMonth || "Slip";
-pdf.save(`Salary_Slip_${name}_${month}.pdf`);
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+      const name = (formik.values.employeeName || "Employee").replace(/\s+/g, "_");
+      const month = formik.values.payMonth || "Slip";
+      pdf.save(`Salary_Slip_${name}_${month}.pdf`);
       try {
         const result = await sendSalaryToBackend(
           { ...formik.values, slipImageData: imgData },
@@ -897,11 +981,14 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
     "email",
   ];
 
-  // ── field() — mobile: smaller text + tighter padding; sm+ unchanged ──
+  // ── field() — now respects isEditMode ──
   const field = (name, label, type = "text", alwaysEditable = false) => {
     const isAutoField = AUTO_FIELDS.includes(name);
-    const readOnly = isAutoField && !isNewJoineeViaModal && !alwaysEditable;
+    // Read-only only when: it's an auto-field, NOT in new joinee mode, NOT in edit mode
+    const readOnly = isAutoField && !isNewJoineeViaModal && !alwaysEditable && !isEditMode;
     const isNewEntry = isAutoField && isNewJoinee && isNewJoineeViaModal;
+    const isEditing = isAutoField && isEditMode && fetchStatus === "found";
+
     return (
       <div>
         <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
@@ -919,7 +1006,9 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
               ? "Auto-filled from Employee ID"
               : isNewEntry
                 ? `Enter ${label}`
-                : ""
+                : isEditing
+                  ? `Edit ${label}`
+                  : ""
           }
           className={`w-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors
             ${
@@ -927,9 +1016,11 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
                 ? "border-red-500 focus:ring-red-500"
                 : readOnly
                   ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
-                  : isNewEntry
-                    ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
-                    : "border-gray-300 focus:ring-indigo-500"
+                  : isEditing
+                    ? "border-amber-400 bg-amber-50 focus:ring-amber-500"
+                    : isNewEntry
+                      ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
+                      : "border-gray-300 focus:ring-indigo-500"
             }`}
         />
         {formik.touched[name] && formik.errors[name] && (
@@ -1203,14 +1294,13 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
 
       {/* ── Page Body ── */}
       <div className="no-print w-full px-3 sm:px-6 md:px-8 py-4 sm:py-6 md:py-10">
-        {/* Page title — smaller on mobile */}
         <h2 className="text-base sm:text-xl md:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6 text-center">
           Salary Slip Form
         </h2>
 
         <form onSubmit={formik.handleSubmit}>
-          {/* Form card */}
           <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl mx-auto px-3 py-4 sm:px-6 sm:py-6 md:px-10 md:py-8 space-y-4 sm:space-y-6">
+
             {/* ── NEW JOINEE BANNER ── */}
             {isNewJoinee && isNewJoineeViaModal && (
               <div className="flex items-start gap-2 sm:gap-3 bg-[#0037CA] border border-blue-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3">
@@ -1242,6 +1332,55 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
                     will be <strong>saved to the database</strong> when you
                     generate the PDF.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── EDIT MODE BANNER ── */}
+            {isEditMode && fetchStatus === "found" && (
+              <div className="flex items-start gap-2 sm:gap-3 bg-amber-50 border border-amber-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3">
+                <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-amber-400 rounded-full flex items-center justify-center mt-0.5">
+                  <svg
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-amber-800 font-semibold text-xs sm:text-sm">
+                    Edit Mode — Modifying Employee Details
+                  </p>
+                  <p className="text-amber-700 text-[10px] sm:text-xs mt-0.5 leading-relaxed">
+                    Changes to employee details for{" "}
+                    <strong className="font-mono">{formik.values.employeeId}</strong>{" "}
+                    will be saved to the database when you click{" "}
+                    <strong>Save Changes</strong>.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="text-[10px] sm:text-xs text-amber-700 hover:text-amber-900 border border-amber-300 px-2 py-1 rounded-full bg-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    disabled={isSavingEdit}
+                    className="text-[10px] sm:text-xs text-white bg-amber-500 hover:bg-amber-600 px-3 py-1 rounded-full font-semibold transition-colors disabled:opacity-60"
+                  >
+                    {isSavingEdit ? "Saving…" : "Save Changes"}
+                  </button>
                 </div>
               </div>
             )}
@@ -1285,10 +1424,33 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
                     Fetching…
                   </p>
                 )}
-                {fetchStatus === "found" && !isNewJoinee && (
-                  <p className="text-green-600 text-[10px] sm:text-xs mt-0.5">
-                    ✓ Employee details loaded
-                  </p>
+                {/* ── EDIT BUTTON — shown when employee is fetched & not in edit mode ── */}
+                {fetchStatus === "found" && !isNewJoinee && !isEditMode && (
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-green-600 text-[10px] sm:text-xs">
+                      ✓ Employee details loaded
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(true)}
+                      className="flex items-center gap-1 text-[9px] sm:text-[10px] text-amber-700 bg-amber-50 border border-amber-300 hover:bg-amber-100 px-1.5 py-0.5 rounded-full font-semibold transition-colors"
+                    >
+                      <svg
+                        className="w-2.5 h-2.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      Edit Details
+                    </button>
+                  </div>
                 )}
                 {isUnknownId && (
                   <p className="text-red-600 text-[10px] sm:text-xs mt-0.5 font-semibold flex items-center gap-1">
@@ -1339,7 +1501,7 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
               </div>
             </div>
 
-            {/* ── Auto-filled Fields ── */}
+            {/* ── Auto-filled / Editable Fields ── */}
             <div
               className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 ${isUnknownId ? "opacity-50 pointer-events-none select-none" : ""}`}
             >
@@ -1365,9 +1527,9 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                readOnly={!isNewJoineeViaModal && fetchStatus === "found"}
+                readOnly={!isNewJoineeViaModal && !isEditMode && fetchStatus === "found"}
                 placeholder={
-                  isNewJoineeViaModal
+                  isNewJoineeViaModal || isEditMode
                     ? "Enter employee email"
                     : "Auto-filled from Employee ID"
                 }
@@ -1375,11 +1537,13 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
                   ${
                     formik.touched.email && formik.errors.email
                       ? "border-red-500 focus:ring-red-500"
-                      : !isNewJoineeViaModal && fetchStatus === "found"
-                        ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
-                        : isNewJoineeViaModal
-                          ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
-                          : "border-gray-300 focus:ring-indigo-500"
+                      : isEditMode
+                        ? "border-amber-400 bg-amber-50 focus:ring-amber-500"
+                        : !isNewJoineeViaModal && fetchStatus === "found"
+                          ? "border-blue-200 bg-blue-50 cursor-default focus:ring-blue-300"
+                          : isNewJoineeViaModal
+                            ? "border-blue-400 bg-blue-50 focus:ring-blue-500 placeholder-blue-400"
+                            : "border-gray-300 focus:ring-indigo-500"
                   }`}
               />
               {formik.touched.email && formik.errors.email && (
@@ -1530,13 +1694,11 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
         </form>
 
         {/* ── Inline Preview ── */}
-        {/* ── Inline Preview ── */}
         {showPreview && (
           <div
             ref={previewRef}
             className="mt-6 sm:mt-8 bg-white rounded-xl p-3 sm:p-4 md:p-6 w-full max-w-4xl mx-auto"
           >
-            {/* Header row */}
             <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800">
@@ -1567,7 +1729,6 @@ pdf.save(`Salary_Slip_${name}_${month}.pdf`);
               </button>
             </div>
 
-            {/* Responsive wrapper — fixed px sizes restored for desktop, shrinks on mobile */}
             <style>{`
       .slip-outer { width: 595px; height: 842px; }
       .slip-inner { transform: scale(0.75); }
