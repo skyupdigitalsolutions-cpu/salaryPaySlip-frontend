@@ -214,12 +214,12 @@ function LoginStep({ onForgotPassword }) {
           label="Password" type={showPass ? "text" : "password"} value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••" autoComplete="current-password"
-          addon={
+          {/* addon={
             <span onClick={() => setShowPass((v) => !v)}
               style={{ cursor: "pointer", fontSize: "1rem", color: "#a0aec0", userSelect: "none" }}>
               {showPass ? "🙈" : "👁"}
             </span>
-          }
+          } */}
         />
         <div style={{ textAlign: "left", marginTop: -10, marginBottom: 18 }}>
           <button type="button" className="btn-link" onClick={onForgotPassword}>
