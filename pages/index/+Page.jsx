@@ -322,15 +322,15 @@ function SlipContent({ values, isNewJoinee }) {
         SKYUP DIGITAL SOLUTIONS LLP
       </div>
 
-      <div
+     <div
         style={{
           display: "flex",
-          justifyContent: "between",
+          justifyContent: "center",
           gap: "40px",
           paddingTop: "6px",
           paddingBottom: "8px",
           width: "600px",
-          paddingLeft: "20px",
+          paddingLeft: "10px",
           marginLeft: "45px",
           marginBottom: "5px",
           fontFamily: "Arial,sans-serif",
@@ -342,9 +342,7 @@ function SlipContent({ values, isNewJoinee }) {
         <span style={{ fontSize: "14px", letterSpacing: "0.3px" }}>
           <strong>GST NUMBER:</strong> 29ABLFRLZU
         </span>
-        <span style={{ fontSize: "14px", letterSpacing: "0.3px" }}>
-          <strong>REGISTRATION NUMBER:</strong> GDN-F729-2024-25
-        </span>
+        
       </div>
 
       <div
