@@ -77,13 +77,17 @@ async function saveEmployee(id, data) {
 }
 
 async function updateEmployee(id, data) {
-  const res = await authFetch(`${API_BASE}/api/employees/${id.trim().toUpperCase()}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
+  const res = await authFetch(
+    `${API_BASE}/api/employees/${id.trim().toUpperCase()}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+  );
   if (!res) return false;
   const json = await res.json();
-  if (!json.success) throw new Error(json.message || "Failed to update employee");
+  if (!json.success)
+    throw new Error(json.message || "Failed to update employee");
   return true;
 }
 
@@ -322,26 +326,25 @@ function SlipContent({ values, isNewJoinee }) {
         SKYUP DIGITAL SOLUTIONS LLP
       </div>
 
-     <div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    gap: "40px",
-    paddingTop: "6px",
-    paddingBottom: "8px",
-    width: "fit-content",        // ← shrinks to text width
-    paddingLeft: "16px",
-    paddingRight: "16px",        // ← equal padding on both sides
-    margin: "20px auto 5px auto", // ← centers it horizontally
-    fontFamily: "Arial,sans-serif",
-    backgroundColor: "#fffacd",
-    borderRadius: "10px",
-  }}
->
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "40px",
+          paddingTop: "6px",
+          paddingBottom: "8px",
+          width: "fit-content", // ← shrinks to text width
+          paddingLeft: "16px",
+          paddingRight: "16px", // ← equal padding on both sides
+          margin: "20px auto 5px auto", // ← centers it horizontally
+          fontFamily: "Arial,sans-serif",
+          backgroundColor: "#fffacd",
+          borderRadius: "10px",
+        }}
+      >
         <span style={{ fontSize: "14px", letterSpacing: "0.3px" }}>
           <strong>GST NUMBER:</strong> 29AFUFS6710E1ZJ
         </span>
-        
       </div>
 
       <div
@@ -627,7 +630,9 @@ function SlipContent({ values, isNewJoinee }) {
               width: "100%",
             }}
           >
-            <div style={{ fontSize: "14px", opacity: 0.7, marginBottom: "6px" }}>
+            <div
+              style={{ fontSize: "14px", opacity: 0.7, marginBottom: "6px" }}
+            >
               For SKYUP DIGITAL SOLUTIONS LLP
             </div>
 
@@ -838,7 +843,9 @@ export default function Page() {
       "email",
     ];
     const editData = {};
-    AUTO_FIELDS.forEach((k) => { editData[k] = formik.values[k]; });
+    AUTO_FIELDS.forEach((k) => {
+      editData[k] = formik.values[k];
+    });
 
     setIsSavingEdit(true);
     try {
@@ -920,7 +927,7 @@ export default function Page() {
       }
 
       const html2canvas = (await import("html2canvas")).default;
-      
+
       const element = receiptRef.current;
       if (!element) throw new Error("Receipt element not found.");
       await new Promise((r) => setTimeout(r, 300));
@@ -936,9 +943,16 @@ export default function Page() {
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
       const { jsPDF } = await import("jspdf");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
       pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
-      const name = (formik.values.employeeName || "Employee").replace(/\s+/g, "_");
+      const name = (formik.values.employeeName || "Employee").replace(
+        /\s+/g,
+        "_",
+      );
       const month = formik.values.payMonth || "Slip";
       pdf.save(`Salary_Slip_${name}_${month}.pdf`);
       try {
@@ -982,7 +996,8 @@ export default function Page() {
   const field = (name, label, type = "text", alwaysEditable = false) => {
     const isAutoField = AUTO_FIELDS.includes(name);
     // Read-only only when: it's an auto-field, NOT in new joinee mode, NOT in edit mode
-    const readOnly = isAutoField && !isNewJoineeViaModal && !alwaysEditable && !isEditMode;
+    const readOnly =
+      isAutoField && !isNewJoineeViaModal && !alwaysEditable && !isEditMode;
     const isNewEntry = isAutoField && isNewJoinee && isNewJoineeViaModal;
     const isEditing = isAutoField && isEditMode && fetchStatus === "found";
 
@@ -1297,7 +1312,6 @@ export default function Page() {
 
         <form onSubmit={formik.handleSubmit}>
           <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl mx-auto px-3 py-4 sm:px-6 sm:py-6 md:px-10 md:py-8 space-y-4 sm:space-y-6">
-
             {/* ── NEW JOINEE BANNER ── */}
             {isNewJoinee && isNewJoineeViaModal && (
               <div className="flex items-start gap-2 sm:gap-3 bg-[#0037CA] border border-blue-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3">
@@ -1357,7 +1371,9 @@ export default function Page() {
                   </p>
                   <p className="text-amber-700 text-[10px] sm:text-xs mt-0.5 leading-relaxed">
                     Changes to employee details for{" "}
-                    <strong className="font-mono">{formik.values.employeeId}</strong>{" "}
+                    <strong className="font-mono">
+                      {formik.values.employeeId}
+                    </strong>{" "}
                     will be saved to the database when you click{" "}
                     <strong>Save Changes</strong>.
                   </p>
@@ -1481,15 +1497,98 @@ export default function Page() {
                 <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                   Pay Month <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="month"
-                  name="payMonth"
-                  value={formik.values.payMonth}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className={`w-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors
-                    ${formik.touched.payMonth && formik.errors.payMonth ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500"}`}
-                />
+                <div className="flex gap-2">
+                  <select
+                    name="payMonth_month"
+                    value={
+                      formik.values.payMonth
+                        ? formik.values.payMonth.split("-")[1]
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const year = formik.values.payMonth
+                        ? formik.values.payMonth.split("-")[0]
+                        : new Date().getFullYear();
+                      const month = e.target.value;
+                      formik.setFieldValue(
+                        "payMonth",
+                        month ? `${year}-${month}` : "",
+                        true,
+                      );
+                      formik.setFieldTouched("payMonth", true, false);
+                    }}
+                    onBlur={() =>
+                      formik.setFieldTouched("payMonth", true, true)
+                    }
+                    className={`flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white
+        ${
+          formik.touched.payMonth && formik.errors.payMonth
+            ? "border-red-500 focus:ring-red-500"
+            : "border-gray-300 focus:ring-indigo-500"
+        }`}
+                  >
+                    <option value="">Month</option>
+                    {[
+                      "January",
+                      "February",
+                      "March",
+                      "April",
+                      "May",
+                      "June",
+                      "July",
+                      "August",
+                      "September",
+                      "October",
+                      "November",
+                      "December",
+                    ].map((m, i) => (
+                      <option key={m} value={String(i + 1).padStart(2, "0")}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    name="payMonth_year"
+                    value={
+                      formik.values.payMonth
+                        ? formik.values.payMonth.split("-")[0]
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const month = formik.values.payMonth
+                        ? formik.values.payMonth.split("-")[1]
+                        : "";
+                      const year = e.target.value;
+                      formik.setFieldValue(
+                        "payMonth",
+                        month && year ? `${year}-${month}` : "",
+                        true,
+                      );
+                      formik.setFieldTouched("payMonth", true, false);
+                    }}
+                    onBlur={() =>
+                      formik.setFieldTouched("payMonth", true, true)
+                    }
+                    className={`w-28 sm:w-32 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white
+        ${
+          formik.touched.payMonth && formik.errors.payMonth
+            ? "border-red-500 focus:ring-red-500"
+            : "border-gray-300 focus:ring-indigo-500"
+        }`}
+                  >
+                    <option value="">Year</option>
+                    {Array.from(
+                      { length: 6 },
+                      (_, i) => new Date().getFullYear() - 1 + i,
+                    ).map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {formik.touched.payMonth && formik.errors.payMonth && (
                   <p className="text-red-500 text-[10px] sm:text-xs mt-0.5">
                     {formik.errors.payMonth}
@@ -1524,7 +1623,9 @@ export default function Page() {
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                readOnly={!isNewJoineeViaModal && !isEditMode && fetchStatus === "found"}
+                readOnly={
+                  !isNewJoineeViaModal && !isEditMode && fetchStatus === "found"
+                }
                 placeholder={
                   isNewJoineeViaModal || isEditMode
                     ? "Enter employee email"
