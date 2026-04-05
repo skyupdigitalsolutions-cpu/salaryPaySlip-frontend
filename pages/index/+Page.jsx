@@ -340,7 +340,7 @@ function SlipContent({ values, isNewJoinee }) {
         }}
       >
         <span style={{ fontSize: "14px", letterSpacing: "0.3px" }}>
-          <strong>GST NUMBER:</strong> 29ABLFRLZU
+          <strong>GST NUMBER:</strong> 29AFUFS6710E1ZJ
         </span>
         
       </div>
