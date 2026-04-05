@@ -589,7 +589,7 @@ function SlipContent({ values, isNewJoinee }) {
               CONTACT DETAILS
             </div>
             <div style={{ lineHeight: "1.8", color: "#555", fontSize: "14px" }}>
-              <strong>mobile –</strong> +91 8867867775
+              <strong>Mobile –</strong> +91 8867867775
               <br />
               <strong>Email –</strong>contact@skyupdigitalsolutions.com
             </div>
