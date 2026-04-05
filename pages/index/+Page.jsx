@@ -323,22 +323,21 @@ function SlipContent({ values, isNewJoinee }) {
       </div>
 
      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "40px",
-          paddingTop: "6px",
-          paddingBottom: "8px",
-          width: "600px",
-          paddingLeft: "10px",
-          marginLeft: "45px",
-          marginBottom: "5px",
-          fontFamily: "Arial,sans-serif",
-          backgroundColor: "#fffacd",
-          borderRadius: "10px",
-          marginTop: "20px",
-        }}
-      >
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    gap: "40px",
+    paddingTop: "6px",
+    paddingBottom: "8px",
+    width: "fit-content",        // ← shrinks to text width
+    paddingLeft: "16px",
+    paddingRight: "16px",        // ← equal padding on both sides
+    margin: "20px auto 5px auto", // ← centers it horizontally
+    fontFamily: "Arial,sans-serif",
+    backgroundColor: "#fffacd",
+    borderRadius: "10px",
+  }}
+>
         <span style={{ fontSize: "14px", letterSpacing: "0.3px" }}>
           <strong>GST NUMBER:</strong> 29AFUFS6710E1ZJ
         </span>
