@@ -112,7 +112,9 @@ async function checkEmployeeExists(id) {
 }
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────
-const numberToWords = (num) => {
+// FIX 1: renamed param to inputNum, round to whole number inside
+const numberToWords = (inputNum) => {
+  const num = Math.round(inputNum);
   if (!num || num === 0) return "Zero";
   const ones = [
     "",
@@ -228,14 +230,16 @@ const defaultValues = {
 
 // ─── SLIP CONTENT ─────────────────────────────────────────────────────────
 function SlipContent({ values, isNewJoinee }) {
+  // FIX 3: round all salary figures to whole numbers
   const earn =
-    (Number(values.basicSalary) || 0) +
-    (Number(values.incentivePay) || 0) +
-    (Number(values.travelAllowance) || 0);
-  const ded = Number(values.lossOfPay) || 0;
+    Math.round(Number(values.basicSalary) || 0) +
+    Math.round(Number(values.incentivePay) || 0) +
+    Math.round(Number(values.travelAllowance) || 0);
+  const ded = Math.round(Number(values.lossOfPay) || 0);
   const net = earn - ded;
 
-  const fmt = (n) => Number(n || 0).toLocaleString("en-IN");
+  // FIX 3: fmt always produces whole number string
+  const fmt = (n) => Math.round(Number(n || 0)).toLocaleString("en-IN");
 
   const payMonthLabel = values.payMonth
     ? new Date(values.payMonth + "-01").toLocaleDateString("en-IN", {
@@ -333,10 +337,10 @@ function SlipContent({ values, isNewJoinee }) {
           gap: "40px",
           paddingTop: "6px",
           paddingBottom: "8px",
-          width: "fit-content", // ← shrinks to text width
+          width: "fit-content",
           paddingLeft: "16px",
-          paddingRight: "16px", // ← equal padding on both sides
-          margin: "20px auto 5px auto", // ← centers it horizontally
+          paddingRight: "16px",
+          margin: "20px auto 5px auto",
           fontFamily: "Arial,sans-serif",
           backgroundColor: "#fffacd",
           borderRadius: "10px",
@@ -443,10 +447,10 @@ function SlipContent({ values, isNewJoinee }) {
         </colgroup>
         <thead>
           <tr>
-            <th style={{ ...hc, textAlign: "left" }}>EARNINGS</th>
-            <th style={{ ...hc, textAlign: "right" }}>AMOUNT</th>
-            <th style={{ ...hc, textAlign: "left" }}>DEDUCTION</th>
-            <th style={{ ...hc, textAlign: "right" }}>Amount</th>
+            <th style={{ ...hc, textAlign: "center" }}>EARNINGS</th>
+            <th style={{ ...hc, textAlign: "center" }}>AMOUNT</th>
+            <th style={{ ...hc, textAlign: "center" }}>DEDUCTION</th>
+            <th style={{ ...hc, textAlign: "center" }}>AMOUNT</th>
           </tr>
         </thead>
         <tbody>
@@ -571,9 +575,9 @@ function SlipContent({ values, isNewJoinee }) {
             COMPANY ADDRESS
           </div>
           <div style={{ lineHeight: "1.8", color: "#555", fontSize: "14px" }}>
-            2nd Floor, No 23, E Block, Parindhi,
+            Parinidhi #23, E Block,
             <br />
-            14A Dasarahalli Main Rd, Sahakar Nagar,
+            14th A Main Road,2nd Floor,Sahakaranagar,
             <br />
             Bengaluru, Karnataka 560092
           </div>
@@ -598,7 +602,6 @@ function SlipContent({ values, isNewJoinee }) {
           </div>
         </div>
 
-        {/* ── FIXED: Signature area — properly sized and positioned ── */}
         <div
           style={{
             width: "50%",
@@ -636,7 +639,6 @@ function SlipContent({ values, isNewJoinee }) {
               For SKYUP DIGITAL SOLUTIONS LLP
             </div>
 
-            {/* Signature image — fixed: constrained size, no overflow */}
             <div
               style={{
                 display: "flex",
@@ -685,8 +687,8 @@ export default function Page() {
   const [fetchStatus, setFetchStatus] = useState("idle");
   const [isNewJoinee, setIsNewJoinee] = useState(false);
   const [isNewJoineeViaModal, setIsNewJoineeViaModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // ← NEW: edit mode for fetched employees
-  const [isSavingEdit, setIsSavingEdit] = useState(false); // ← NEW: saving state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [toast, setToast] = useState(null);
   const [showNewEmpModal, setShowNewEmpModal] = useState(false);
   const [newEmpIdInput, setNewEmpIdInput] = useState("");
@@ -746,7 +748,7 @@ export default function Page() {
       setFetchStatus("idle");
       setIsNewJoinee(false);
       setIsNewJoineeViaModal(false);
-      setIsEditMode(false); // reset edit mode on ID clear
+      setIsEditMode(false);
       [
         "employeeName",
         "designation",
@@ -760,7 +762,7 @@ export default function Page() {
     }
     if (isNewJoineeViaModal) return;
     setFetchStatus("loading");
-    setIsEditMode(false); // reset edit mode when fetching new employee
+    setIsEditMode(false);
     let cancelled = false;
     fetchEmployee(id).then((emp) => {
       if (cancelled) return;
@@ -792,6 +794,7 @@ export default function Page() {
     };
   }, [formik.values.employeeId]);
 
+  // FIX 2: round lossOfPay to whole number
   useEffect(() => {
     const basic = Number(formik.values.basicSalary),
       payDays = Number(formik.values.payDays),
@@ -799,7 +802,7 @@ export default function Page() {
     if (basic > 0 && payDays > 0 && lopDays >= 0)
       formik.setFieldValue(
         "lossOfPay",
-        Math.round((basic / payDays) * lopDays * 100) / 100,
+        Math.round((basic / payDays) * lopDays),
         false,
       );
     else if (lopDays === 0) formik.setFieldValue("lossOfPay", 0, false);
@@ -831,7 +834,6 @@ export default function Page() {
     });
   };
 
-  // ── NEW: Save edited employee details to DB ──
   const handleSaveEdit = async () => {
     const AUTO_FIELDS = [
       "employeeName",
@@ -859,7 +861,6 @@ export default function Page() {
     }
   };
 
-  // ── NEW: Cancel edit — re-fetch original data ──
   const handleCancelEdit = () => {
     setIsEditMode(false);
     const id = formik.values.employeeId?.trim();
@@ -992,10 +993,8 @@ export default function Page() {
     "email",
   ];
 
-  // ── field() — now respects isEditMode ──
   const field = (name, label, type = "text", alwaysEditable = false) => {
     const isAutoField = AUTO_FIELDS.includes(name);
-    // Read-only only when: it's an auto-field, NOT in new joinee mode, NOT in edit mode
     const readOnly =
       isAutoField && !isNewJoineeViaModal && !alwaysEditable && !isEditMode;
     const isNewEntry = isAutoField && isNewJoinee && isNewJoineeViaModal;
@@ -1049,7 +1048,7 @@ export default function Page() {
     (Number(formik.values.incentivePay) || 0) +
     (Number(formik.values.travelAllowance) || 0);
   const ded = Number(formik.values.lossOfPay) || 0;
-  const net = earn - ded;
+  const net = Math.round(earn - ded);
   const isUnknownId = fetchStatus === "notfound" && !isNewJoineeViaModal;
 
   if (!authChecked) {
@@ -1437,7 +1436,6 @@ export default function Page() {
                     Fetching…
                   </p>
                 )}
-                {/* ── EDIT BUTTON — shown when employee is fetched & not in edit mode ── */}
                 {fetchStatus === "found" && !isNewJoinee && !isEditMode && (
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-green-600 text-[10px] sm:text-xs">
