@@ -7,4 +7,12 @@ export default defineConfig({
     vike({ prerender: true }),
     react(),
   ],
+  optimizeDeps: {
+    force: true,
+  },
+  server: {
+    watch: {
+      ignored: ["**/.env"],
+    },
+  },
 });
