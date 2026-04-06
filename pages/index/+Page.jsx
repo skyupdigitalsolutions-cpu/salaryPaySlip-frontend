@@ -204,6 +204,7 @@ const validationSchema = Yup.object({
     .required("Basic Salary is required"),
   incentivePay: Yup.number().typeError("Must be a number"),
   travelAllowance: Yup.number().typeError("Must be a number"),
+  transactionId: Yup.string().nullable(),
   lossOfPay: Yup.number()
     .typeError("Must be a number")
     .min(0)
@@ -225,6 +226,7 @@ const defaultValues = {
   basicSalary: "",
   incentivePay: "",
   travelAllowance: "",
+  transactionId: "",
   lossOfPay: "",
 };
 
@@ -424,8 +426,10 @@ function SlipContent({ values, isNewJoinee }) {
           </tr>
           <tr>
             <td style={lc}>DATE OF JOINING</td>
-            <td style={vc} colSpan={3}>
-              {doj}
+            <td style={vc}>{doj}</td>
+            <td style={lc}>TRANSACTION ID</td>
+            <td style={{ ...vc, fontFamily: "monospace", letterSpacing: "0.5px" }}>
+              {values.transactionId || "—"}
             </td>
           </tr>
         </tbody>
@@ -696,6 +700,17 @@ export default function Page() {
   const [adminInfo, setAdminInfo] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
 
+  // ── View Receipts state ──
+  const [showReceiptsModal, setShowReceiptsModal] = useState(false);
+  const [receipts, setReceipts] = useState([]);
+  const [receiptsLoading, setReceiptsLoading] = useState(false);
+  const [receiptsError, setReceiptsError] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterYear, setFilterYear] = useState("");
+  const [previewReceipt, setPreviewReceipt] = useState(null); // record being previewed
+  const [downloadingId, setDownloadingId] = useState(null);  // _id of record being downloaded
+  const receiptSlipRef = useRef(null);
+
   const receiptRef = useRef(null);
   const previewRef = useRef(null);
   const newEmpIdRef = useRef(null);
@@ -858,6 +873,69 @@ export default function Page() {
       showToast(`❌ Failed to update: ${err.message}`, "error");
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const fetchReceipts = async (month = filterMonth, year = filterYear) => {
+    setReceiptsLoading(true);
+    setReceiptsError("");
+    try {
+      const params = new URLSearchParams();
+      if (month) params.set("month", month);
+      if (year) params.set("year", year);
+      const res = await authFetch(`${API_BASE}/api/salary/receipts?${params.toString()}`);
+      if (!res || !res.ok) throw new Error("Failed to fetch receipts");
+      const json = await res.json();
+      setReceipts(json.success ? json.data : []);
+    } catch (err) {
+      setReceiptsError(err.message || "Could not load receipts");
+    } finally {
+      setReceiptsLoading(false);
+    }
+  };
+
+  const handleOpenReceipts = () => {
+    setShowReceiptsModal(true);
+    fetchReceipts(filterMonth, filterYear);
+  };
+
+  const handleReceiptsFilter = () => {
+    fetchReceipts(filterMonth, filterYear);
+  };
+
+  const handleDownloadReceiptPDF = async (r) => {
+    setDownloadingId(r._id);
+    try {
+      // Temporarily render the slip off-screen using receiptSlipRef
+      setPreviewReceipt(r);
+      await new Promise((res) => setTimeout(res, 600));
+
+      const html2canvas = (await import("html2canvas")).default;
+      const element = receiptSlipRef.current;
+      if (!element) throw new Error("Slip element not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 4,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        width: 794,
+        height: 1123,
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+      const name = (r.employeeName || "Employee").replace(/\s+/g, "_");
+      pdf.save(`Salary_Slip_${name}_${r.payMonth}.pdf`);
+      showToast("✅ PDF downloaded successfully!");
+    } catch (err) {
+      showToast(`❌ Failed to download: ${err.message}`, "error");
+    } finally {
+      setDownloadingId(null);
+      // Keep previewReceipt set if user is in preview mode, else clear
+      if (!previewReceipt || previewReceipt._id !== r._id) setPreviewReceipt(null);
     }
   };
 
@@ -1092,6 +1170,30 @@ export default function Page() {
           />
         </div>
         <div className="flex-1" />
+        {/* ── View Receipts Button ── */}
+        <button
+          type="button"
+          onClick={handleOpenReceipts}
+          className="flex items-center gap-1.5 sm:gap-2 bg-white hover:bg-green-50 border-2 border-green-700 text-black px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full transition-colors"
+        >
+          <svg
+            className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-700"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase hidden sm:inline text-green-700">
+            View Receipts
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => {
@@ -1170,6 +1272,223 @@ export default function Page() {
           </button>
         </div>
       </div>
+
+      {/* ── View Receipts Modal ── */}
+      {showReceiptsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm no-print px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-auto overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="bg-green-700 px-4 sm:px-6 py-4 flex items-center gap-3 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-sm sm:text-base tracking-wide">Generated Receipts</h3>
+                <p className="text-white/80 text-[10px] sm:text-xs mt-0.5">View, preview and download salary slips</p>
+              </div>
+              <button onClick={() => { setShowReceiptsModal(false); setPreviewReceipt(null); }} className="ml-auto text-white/70 hover:text-white transition-colors">
+                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="px-4 sm:px-6 py-3 border-b border-gray-100 flex flex-wrap gap-2 items-end flex-shrink-0 bg-gray-50">
+              <div>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Month</label>
+                <select
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                  className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 bg-white"
+                >
+                  <option value="">All Months</option>
+                  {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => (
+                    <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Year</label>
+                <select
+                  value={filterYear}
+                  onChange={(e) => setFilterYear(e.target.value)}
+                  className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 bg-white"
+                >
+                  <option value="">All Years</option>
+                  {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={handleReceiptsFilter}
+                className="px-4 py-1.5 text-xs font-bold text-white bg-green-700 rounded-full hover:bg-green-800 transition-colors"
+              >
+                Apply Filter
+              </button>
+              {(filterMonth || filterYear) && (
+                <button
+                  type="button"
+                  onClick={() => { setFilterMonth(""); setFilterYear(""); fetchReceipts("", ""); }}
+                  className="px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+              <span className="ml-auto text-[10px] text-gray-400 self-center">
+                {receiptsLoading ? "Loading…" : `${receipts.length} receipt${receipts.length !== 1 ? "s" : ""}`}
+              </span>
+            </div>
+
+            {/* Body — list + preview side by side when preview is open */}
+            <div className="flex flex-1 overflow-hidden">
+
+              {/* Receipts List */}
+              <div className={`overflow-y-auto px-4 sm:px-6 py-4 flex-shrink-0 ${previewReceipt ? "w-full sm:w-80 border-r border-gray-100" : "w-full"}`}>
+                {receiptsLoading && (
+                  <div className="flex justify-center items-center py-12">
+                    <svg className="w-6 h-6 animate-spin text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
+                    </svg>
+                  </div>
+                )}
+                {!receiptsLoading && receiptsError && (
+                  <div className="text-center py-10 text-red-500 text-sm">{receiptsError}</div>
+                )}
+                {!receiptsLoading && !receiptsError && receipts.length === 0 && (
+                  <div className="text-center py-12 text-gray-400">
+                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-sm font-medium">No receipts found</p>
+                    <p className="text-xs mt-1">Try a different month or year filter</p>
+                  </div>
+                )}
+                {!receiptsLoading && !receiptsError && receipts.length > 0 && (
+                  <div className="space-y-2">
+                    {receipts.map((r) => {
+                      const payMonthLabel = r.payMonth
+                        ? new Date(r.payMonth + "-01").toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+                        : r.payMonth;
+                      const generatedAt = r.createdAt
+                        ? new Date(r.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        : "—";
+                      const fmt = (n) => Math.round(Number(n || 0)).toLocaleString("en-IN");
+                      const isSelected = previewReceipt?._id === r._id;
+                      const isDownloading = downloadingId === r._id;
+                      return (
+                        <div
+                          key={r._id}
+                          className={`border rounded-xl p-3 transition-colors ${isSelected ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-green-300 hover:bg-green-50/30"}`}
+                        >
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-green-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-800">{r.employeeName}</p>
+                                <p className="text-[10px] text-gray-400 font-mono">{r.employeeId}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full">{payMonthLabel}</span>
+                              {r.isNewJoinee && <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">New Joinee</span>}
+                              {r.emailSent
+                                ? <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">✓ Email Sent</span>
+                                : <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">Email Pending</span>
+                              }
+                            </div>
+                          </div>
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <div className="bg-white border border-gray-100 rounded-lg px-2.5 py-1.5">
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wider">Net Salary</p>
+                              <p className="text-xs font-bold text-gray-800">₹{fmt(r.netSalary)}</p>
+                            </div>
+                            <div className="bg-white border border-gray-100 rounded-lg px-2.5 py-1.5">
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wider">Generated</p>
+                              <p className="text-[10px] font-semibold text-gray-700">{generatedAt}</p>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1.5 mb-2">📧 {r.email}</p>
+
+                          {/* Action buttons */}
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewReceipt(isSelected ? null : r)}
+                              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-all
+                                ${isSelected
+                                  ? "bg-green-700 text-white border-green-700"
+                                  : "bg-white text-green-700 border-green-600 hover:bg-green-50"}`}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              {isSelected ? "Hide Preview" : "View Receipt"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadReceiptPDF(r)}
+                              disabled={isDownloading}
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full border border-blue-600 text-blue-700 bg-white hover:bg-blue-50 transition-all disabled:opacity-50"
+                            >
+                              {isDownloading ? (
+                                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              )}
+                              {isDownloading ? "Downloading…" : "Download PDF"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Slip Preview Panel */}
+              {previewReceipt && (
+                <div className="hidden sm:flex flex-1 overflow-y-auto flex-col items-center bg-gray-100 p-4">
+                  <div className="flex items-center justify-between w-full mb-3">
+                    <p className="text-xs font-semibold text-gray-600">
+                      Preview — {previewReceipt.employeeName} / {previewReceipt.payMonth}
+                    </p>
+                    <button
+                      onClick={() => setPreviewReceipt(null)}
+                      className="text-gray-400 hover:text-gray-700 text-xs flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      Close
+                    </button>
+                  </div>
+                  <div
+                    style={{ width: "420px", height: "595px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)", borderRadius: "4px" }}
+                  >
+                    <div style={{ width: "794px", height: "1123px", transform: "scale(0.529)", transformOrigin: "top left", backgroundColor: "#ffffff" }}>
+                      <SlipContent values={previewReceipt} isNewJoinee={previewReceipt.isNewJoinee} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── New Employee Modal ── */}
       {showNewEmpModal && (
@@ -1495,97 +1814,32 @@ export default function Page() {
                 <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-0.5 sm:mb-1">
                   Pay Month <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    name="payMonth_month"
-                    value={
-                      formik.values.payMonth
-                        ? formik.values.payMonth.split("-")[1]
-                        : ""
+                <input
+                  type="date"
+                  name="payMonth_date"
+                  value={
+                    formik.values.payMonth
+                      ? `${formik.values.payMonth}-01`
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value; // "YYYY-MM-DD"
+                    if (val) {
+                      const [year, month] = val.split("-");
+                      formik.setFieldValue("payMonth", `${year}-${month}`, true);
+                    } else {
+                      formik.setFieldValue("payMonth", "", true);
                     }
-                    onChange={(e) => {
-                      const year = formik.values.payMonth
-                        ? formik.values.payMonth.split("-")[0]
-                        : new Date().getFullYear();
-                      const month = e.target.value;
-                      formik.setFieldValue(
-                        "payMonth",
-                        month ? `${year}-${month}` : "",
-                        true,
-                      );
-                      formik.setFieldTouched("payMonth", true, false);
-                    }}
-                    onBlur={() =>
-                      formik.setFieldTouched("payMonth", true, true)
-                    }
-                    className={`flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white
-        ${
-          formik.touched.payMonth && formik.errors.payMonth
-            ? "border-red-500 focus:ring-red-500"
-            : "border-gray-300 focus:ring-indigo-500"
-        }`}
-                  >
-                    <option value="">Month</option>
-                    {[
-                      "January",
-                      "February",
-                      "March",
-                      "April",
-                      "May",
-                      "June",
-                      "July",
-                      "August",
-                      "September",
-                      "October",
-                      "November",
-                      "December",
-                    ].map((m, i) => (
-                      <option key={m} value={String(i + 1).padStart(2, "0")}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="payMonth_year"
-                    value={
-                      formik.values.payMonth
-                        ? formik.values.payMonth.split("-")[0]
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const month = formik.values.payMonth
-                        ? formik.values.payMonth.split("-")[1]
-                        : "";
-                      const year = e.target.value;
-                      formik.setFieldValue(
-                        "payMonth",
-                        month && year ? `${year}-${month}` : "",
-                        true,
-                      );
-                      formik.setFieldTouched("payMonth", true, false);
-                    }}
-                    onBlur={() =>
-                      formik.setFieldTouched("payMonth", true, true)
-                    }
-                    className={`w-28 sm:w-32 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white
-        ${
-          formik.touched.payMonth && formik.errors.payMonth
-            ? "border-red-500 focus:ring-red-500"
-            : "border-gray-300 focus:ring-indigo-500"
-        }`}
-                  >
-                    <option value="">Year</option>
-                    {Array.from(
-                      { length: 6 },
-                      (_, i) => new Date().getFullYear() - 1 + i,
-                    ).map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    formik.setFieldTouched("payMonth", true, false);
+                  }}
+                  onBlur={() => formik.setFieldTouched("payMonth", true, true)}
+                  className={`w-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white
+                    ${
+                      formik.touched.payMonth && formik.errors.payMonth
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-indigo-500"
+                    }`}
+                />
 
                 {formik.touched.payMonth && formik.errors.payMonth && (
                   <p className="text-red-500 text-[10px] sm:text-xs mt-0.5">
@@ -1687,6 +1941,9 @@ export default function Page() {
                   "number",
                   true,
                 )}
+              </div>
+              <div className="mt-2.5 sm:mt-3">
+                {field("transactionId", "Transaction ID", "text", true)}
               </div>
             </div>
 
@@ -1872,6 +2129,26 @@ export default function Page() {
             <SlipContent values={formik.values} isNewJoinee={isNewJoinee} />
           </div>
         </div>
+
+        {/* Hidden renderer for receipt PDF download */}
+        {previewReceipt && (
+          <div
+            style={{
+              position: "fixed",
+              left: "-9999px",
+              top: 0,
+              width: "794px",
+              height: "1123px",
+              overflow: "hidden",
+              backgroundColor: "#ffffff",
+              zIndex: -1,
+            }}
+          >
+            <div ref={receiptSlipRef} style={{ width: "794px", height: "1123px" }}>
+              <SlipContent values={previewReceipt} isNewJoinee={previewReceipt.isNewJoinee} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Toast ── */}
