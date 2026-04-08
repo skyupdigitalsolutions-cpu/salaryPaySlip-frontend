@@ -428,7 +428,9 @@ function SlipContent({ values, isNewJoinee }) {
             <td style={lc}>DATE OF JOINING</td>
             <td style={vc}>{doj}</td>
             <td style={lc}>TRANSACTION ID</td>
-            <td style={{ ...vc, fontFamily: "monospace", letterSpacing: "0.5px" }}>
+            <td
+              style={{ ...vc, fontFamily: "monospace", letterSpacing: "0.5px" }}
+            >
               {values.transactionId || "—"}
             </td>
           </tr>
@@ -708,7 +710,7 @@ export default function Page() {
   const [filterMonth, setFilterMonth] = useState("");
   const [filterYear, setFilterYear] = useState("");
   const [previewReceipt, setPreviewReceipt] = useState(null); // record being previewed
-  const [downloadingId, setDownloadingId] = useState(null);  // _id of record being downloaded
+  const [downloadingId, setDownloadingId] = useState(null); // _id of record being downloaded
   const receiptSlipRef = useRef(null);
 
   const receiptRef = useRef(null);
@@ -883,7 +885,9 @@ export default function Page() {
       const params = new URLSearchParams();
       if (month) params.set("month", month);
       if (year) params.set("year", year);
-      const res = await authFetch(`${API_BASE}/api/salary/receipts?${params.toString()}`);
+      const res = await authFetch(
+        `${API_BASE}/api/salary/receipts?${params.toString()}`,
+      );
       if (!res || !res.ok) throw new Error("Failed to fetch receipts");
       const json = await res.json();
       setReceipts(json.success ? json.data : []);
@@ -925,7 +929,11 @@ export default function Page() {
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
       const { jsPDF } = await import("jspdf");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
       pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
       const name = (r.employeeName || "Employee").replace(/\s+/g, "_");
       pdf.save(`Salary_Slip_${name}_${r.payMonth}.pdf`);
@@ -935,7 +943,8 @@ export default function Page() {
     } finally {
       setDownloadingId(null);
       // Keep previewReceipt set if user is in preview mode, else clear
-      if (!previewReceipt || previewReceipt._id !== r._id) setPreviewReceipt(null);
+      if (!previewReceipt || previewReceipt._id !== r._id)
+        setPreviewReceipt(null);
     }
   };
 
@@ -1280,17 +1289,45 @@ export default function Page() {
             {/* Header */}
             <div className="bg-green-700 px-4 sm:px-6 py-4 flex items-center gap-3 flex-shrink-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </div>
               <div>
-                <h3 className="text-white font-bold text-sm sm:text-base tracking-wide">Generated Receipts</h3>
-                <p className="text-white/80 text-[10px] sm:text-xs mt-0.5">View, preview and download salary slips</p>
+                <h3 className="text-white font-bold text-sm sm:text-base tracking-wide">
+                  Generated Receipts
+                </h3>
+                <p className="text-white/80 text-[10px] sm:text-xs mt-0.5">
+                  View, preview and download salary slips
+                </p>
               </div>
-              <button onClick={() => { setShowReceiptsModal(false); setPreviewReceipt(null); }} className="ml-auto text-white/70 hover:text-white transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              <button
+                onClick={() => {
+                  setShowReceiptsModal(false);
+                  setPreviewReceipt(null);
+                }}
+                className="ml-auto text-white/70 hover:text-white transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </div>
@@ -1298,28 +1335,52 @@ export default function Page() {
             {/* Filter Bar */}
             <div className="px-4 sm:px-6 py-3 border-b border-gray-100 flex flex-wrap gap-2 items-end flex-shrink-0 bg-gray-50">
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Month</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Month
+                </label>
                 <select
                   value={filterMonth}
                   onChange={(e) => setFilterMonth(e.target.value)}
                   className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 bg-white"
                 >
                   <option value="">All Months</option>
-                  {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => (
-                    <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                  {[
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                  ].map((m, i) => (
+                    <option key={m} value={String(i + 1).padStart(2, "0")}>
+                      {m}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Year</label>
+                <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Year
+                </label>
                 <select
                   value={filterYear}
                   onChange={(e) => setFilterYear(e.target.value)}
                   className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 bg-white"
                 >
                   <option value="">All Years</option>
-                  {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
-                    <option key={y} value={y}>{y}</option>
+                  {Array.from(
+                    { length: 6 },
+                    (_, i) => new Date().getFullYear() - 1 + i,
+                  ).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1333,51 +1394,90 @@ export default function Page() {
               {(filterMonth || filterYear) && (
                 <button
                   type="button"
-                  onClick={() => { setFilterMonth(""); setFilterYear(""); fetchReceipts("", ""); }}
+                  onClick={() => {
+                    setFilterMonth("");
+                    setFilterYear("");
+                    fetchReceipts("", "");
+                  }}
                   className="px-3 py-1.5 text-xs font-semibold text-gray-500 border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
                 >
                   Clear
                 </button>
               )}
               <span className="ml-auto text-[10px] text-gray-400 self-center">
-                {receiptsLoading ? "Loading…" : `${receipts.length} receipt${receipts.length !== 1 ? "s" : ""}`}
+                {receiptsLoading
+                  ? "Loading…"
+                  : `${receipts.length} receipt${receipts.length !== 1 ? "s" : ""}`}
               </span>
             </div>
 
             {/* Body — list + preview side by side when preview is open */}
             <div className="flex flex-1 overflow-hidden">
-
               {/* Receipts List */}
-              <div className={`overflow-y-auto px-4 sm:px-6 py-4 flex-shrink-0 ${previewReceipt ? "w-full sm:w-80 border-r border-gray-100" : "w-full"}`}>
+              <div
+                className={`overflow-y-auto px-4 sm:px-6 py-4 flex-shrink-0 ${previewReceipt ? "w-full sm:w-80 border-r border-gray-100" : "w-full"}`}
+              >
                 {receiptsLoading && (
                   <div className="flex justify-center items-center py-12">
-                    <svg className="w-6 h-6 animate-spin text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg
+                      className="w-6 h-6 animate-spin text-green-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
                       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
                     </svg>
                   </div>
                 )}
                 {!receiptsLoading && receiptsError && (
-                  <div className="text-center py-10 text-red-500 text-sm">{receiptsError}</div>
-                )}
-                {!receiptsLoading && !receiptsError && receipts.length === 0 && (
-                  <div className="text-center py-12 text-gray-400">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p className="text-sm font-medium">No receipts found</p>
-                    <p className="text-xs mt-1">Try a different month or year filter</p>
+                  <div className="text-center py-10 text-red-500 text-sm">
+                    {receiptsError}
                   </div>
                 )}
+                {!receiptsLoading &&
+                  !receiptsError &&
+                  receipts.length === 0 && (
+                    <div className="text-center py-12 text-gray-400">
+                      <svg
+                        className="w-12 h-12 mx-auto mb-3 text-gray-200"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium">No receipts found</p>
+                      <p className="text-xs mt-1">
+                        Try a different month or year filter
+                      </p>
+                    </div>
+                  )}
                 {!receiptsLoading && !receiptsError && receipts.length > 0 && (
                   <div className="space-y-2">
                     {receipts.map((r) => {
                       const payMonthLabel = r.payMonth
-                        ? new Date(r.payMonth + "-01").toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+                        ? new Date(r.payMonth + "-01").toLocaleDateString(
+                            "en-IN",
+                            { month: "long", year: "numeric" },
+                          )
                         : r.payMonth;
                       const generatedAt = r.createdAt
-                        ? new Date(r.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        ? new Date(r.createdAt).toLocaleString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "—";
-                      const fmt = (n) => Math.round(Number(n || 0)).toLocaleString("en-IN");
+                      const fmt = (n) =>
+                        Math.round(Number(n || 0)).toLocaleString("en-IN");
                       const isSelected = previewReceipt?._id === r._id;
                       const isDownloading = downloadingId === r._id;
                       return (
@@ -1388,49 +1488,102 @@ export default function Page() {
                           <div className="flex items-start justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-2">
                               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-green-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                <svg
+                                  className="w-4 h-4 text-green-700"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                  />
                                 </svg>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-gray-800">{r.employeeName}</p>
-                                <p className="text-[10px] text-gray-400 font-mono">{r.employeeId}</p>
+                                <p className="text-xs font-bold text-gray-800">
+                                  {r.employeeName}
+                                </p>
+                                <p className="text-[10px] text-gray-400 font-mono">
+                                  {r.employeeId}
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full">{payMonthLabel}</span>
-                              {r.isNewJoinee && <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">New Joinee</span>}
-                              {r.emailSent
-                                ? <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">✓ Email Sent</span>
-                                : <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">Email Pending</span>
-                              }
+                              <span className="text-[10px] font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full">
+                                {payMonthLabel}
+                              </span>
+                              {r.isNewJoinee && (
+                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                                  New Joinee
+                                </span>
+                              )}
+                              {r.emailSent ? (
+                                <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                  ✓ Email Sent
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">
+                                  Email Pending
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="mt-2 grid grid-cols-2 gap-2">
                             <div className="bg-white border border-gray-100 rounded-lg px-2.5 py-1.5">
-                              <p className="text-[9px] text-gray-400 uppercase tracking-wider">Net Salary</p>
-                              <p className="text-xs font-bold text-gray-800">₹{fmt(r.netSalary)}</p>
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wider">
+                                Net Salary
+                              </p>
+                              <p className="text-xs font-bold text-gray-800">
+                                ₹{fmt(r.netSalary)}
+                              </p>
                             </div>
                             <div className="bg-white border border-gray-100 rounded-lg px-2.5 py-1.5">
-                              <p className="text-[9px] text-gray-400 uppercase tracking-wider">Generated</p>
-                              <p className="text-[10px] font-semibold text-gray-700">{generatedAt}</p>
+                              <p className="text-[9px] text-gray-400 uppercase tracking-wider">
+                                Generated
+                              </p>
+                              <p className="text-[10px] font-semibold text-gray-700">
+                                {generatedAt}
+                              </p>
                             </div>
                           </div>
-                          <p className="text-[10px] text-gray-400 mt-1.5 mb-2">📧 {r.email}</p>
+                          <p className="text-[10px] text-gray-400 mt-1.5 mb-2">
+                            📧 {r.email}
+                          </p>
 
                           {/* Action buttons */}
                           <div className="flex gap-2 mt-1">
                             <button
                               type="button"
-                              onClick={() => setPreviewReceipt(isSelected ? null : r)}
+                              onClick={() =>
+                                setPreviewReceipt(isSelected ? null : r)
+                              }
                               className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-all
-                                ${isSelected
-                                  ? "bg-green-700 text-white border-green-700"
-                                  : "bg-white text-green-700 border-green-600 hover:bg-green-50"}`}
+                                ${
+                                  isSelected
+                                    ? "bg-green-700 text-white border-green-700"
+                                    : "bg-white text-green-700 border-green-600 hover:bg-green-50"
+                                }`}
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
                               </svg>
                               {isSelected ? "Hide Preview" : "View Receipt"}
                             </button>
@@ -1441,12 +1594,28 @@ export default function Page() {
                               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full border border-blue-600 text-blue-700 bg-white hover:bg-blue-50 transition-all disabled:opacity-50"
                             >
                               {isDownloading ? (
-                                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <svg
+                                  className="w-3.5 h-3.5 animate-spin"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                >
                                   <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
                                 </svg>
                               ) : (
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                  />
                                 </svg>
                               )}
                               {isDownloading ? "Downloading…" : "Download PDF"}
@@ -1464,23 +1633,49 @@ export default function Page() {
                 <div className="hidden sm:flex flex-1 overflow-y-auto flex-col items-center bg-gray-100 p-4">
                   <div className="flex items-center justify-between w-full mb-3">
                     <p className="text-xs font-semibold text-gray-600">
-                      Preview — {previewReceipt.employeeName} / {previewReceipt.payMonth}
+                      Preview — {previewReceipt.employeeName} /{" "}
+                      {previewReceipt.payMonth}
                     </p>
                     <button
                       onClick={() => setPreviewReceipt(null)}
                       className="text-gray-400 hover:text-gray-700 text-xs flex items-center gap-1"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                       Close
                     </button>
                   </div>
                   <div
-                    style={{ width: "420px", height: "595px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.12)", borderRadius: "4px" }}
+                    style={{
+                      width: "420px",
+                      height: "595px",
+                      overflow: "hidden",
+                      boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+                      borderRadius: "4px",
+                    }}
                   >
-                    <div style={{ width: "794px", height: "1123px", transform: "scale(0.529)", transformOrigin: "top left", backgroundColor: "#ffffff" }}>
-                      <SlipContent values={previewReceipt} isNewJoinee={previewReceipt.isNewJoinee} />
+                    <div
+                      style={{
+                        width: "794px",
+                        height: "1123px",
+                        transform: "scale(0.529)",
+                        transformOrigin: "top left",
+                        backgroundColor: "#ffffff",
+                      }}
+                    >
+                      <SlipContent
+                        values={previewReceipt}
+                        isNewJoinee={previewReceipt.isNewJoinee}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1815,32 +2010,21 @@ export default function Page() {
                   Pay Month <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="date"
-                  name="payMonth_date"
-                  value={
-                    formik.values.payMonth
-                      ? `${formik.values.payMonth}-01`
-                      : ""
-                  }
+                  type="month"
+                  name="payMonth"
+                  value={formik.values.payMonth}
                   onChange={(e) => {
-                    const val = e.target.value; // "YYYY-MM-DD"
-                    if (val) {
-                      const [year, month] = val.split("-");
-                      formik.setFieldValue("payMonth", `${year}-${month}`, true);
-                    } else {
-                      formik.setFieldValue("payMonth", "", true);
-                    }
+                    formik.setFieldValue("payMonth", e.target.value, true);
                     formik.setFieldTouched("payMonth", true, false);
                   }}
                   onBlur={() => formik.setFieldTouched("payMonth", true, true)}
                   className={`w-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md focus:outline-none focus:ring-1 transition-colors bg-white
-                    ${
-                      formik.touched.payMonth && formik.errors.payMonth
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-gray-300 focus:ring-indigo-500"
-                    }`}
+      ${
+        formik.touched.payMonth && formik.errors.payMonth
+          ? "border-red-500 focus:ring-red-500"
+          : "border-gray-300 focus:ring-indigo-500"
+      }`}
                 />
-
                 {formik.touched.payMonth && formik.errors.payMonth && (
                   <p className="text-red-500 text-[10px] sm:text-xs mt-0.5">
                     {formik.errors.payMonth}
@@ -2144,8 +2328,14 @@ export default function Page() {
               zIndex: -1,
             }}
           >
-            <div ref={receiptSlipRef} style={{ width: "794px", height: "1123px" }}>
-              <SlipContent values={previewReceipt} isNewJoinee={previewReceipt.isNewJoinee} />
+            <div
+              ref={receiptSlipRef}
+              style={{ width: "794px", height: "1123px" }}
+            >
+              <SlipContent
+                values={previewReceipt}
+                isNewJoinee={previewReceipt.isNewJoinee}
+              />
             </div>
           </div>
         )}
