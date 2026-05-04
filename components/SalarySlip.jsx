@@ -1,4 +1,3 @@
-
 import { forwardRef, useEffect, useState } from "react";
 import { useField, useFormikContext } from "formik";
 
@@ -242,7 +241,7 @@ export const SalarySlipPreview = forwardRef(function SalarySlipPreview({ data, v
     (Number(data.basicSalary)     || 0) +
     (Number(data.incentivePay)    || 0) +
     (Number(data.travelAllowance) || 0);
-  const totalDeduction = Number(data.lossOfPay) || 0;
+  const totalDeduction = (Number(data.lossOfPay) || 0) + (Number(data.professionalTax) || 0);
   const netSalary      = totalEarnings - totalDeduction;
 
   const payMonthLabel = data.payMonth
@@ -365,14 +364,14 @@ export const SalarySlipPreview = forwardRef(function SalarySlipPreview({ data, v
               <tr>
                 <td style={tdLE}>Incentive Pay</td>
                 <td style={tdRE}>{fmt(data.incentivePay)}</td>
-                <td style={tdLE}></td>
-                <td style={tdRE}></td>
+                <td style={tdLE}>Professional Tax</td>
+                <td style={tdRE}>{fmt(data.professionalTax)}</td>
               </tr>
               <tr>
                 <td style={tdL}>Travel Allowance</td>
                 <td style={tdR}>{fmt(data.travelAllowance)}</td>
-                <td style={tdL}></td>
-                <td style={tdR}></td>
+                <td style={tdLE}></td>
+                <td style={tdRE}></td>
               </tr>
               <tr>
                 <td style={{...tdL, background:"#1a3a2a", color:"#fff", fontWeight:"700", borderBottom:"none"}}>Total Earnings</td>

@@ -204,6 +204,7 @@ const validationSchema = Yup.object({
     .required("Basic Salary is required"),
   incentivePay: Yup.number().typeError("Must be a number"),
   travelAllowance: Yup.number().typeError("Must be a number"),
+  professionalTax: Yup.number().typeError("Must be a number").min(0),
   transactionId: Yup.string().nullable(),
   lossOfPay: Yup.number()
     .typeError("Must be a number")
@@ -226,6 +227,7 @@ const defaultValues = {
   basicSalary: "",
   incentivePay: "",
   travelAllowance: "",
+  professionalTax: "",
   transactionId: "",
   lossOfPay: "",
 };
@@ -237,7 +239,7 @@ function SlipContent({ values, isNewJoinee }) {
     Math.round(Number(values.basicSalary) || 0) +
     Math.round(Number(values.incentivePay) || 0) +
     Math.round(Number(values.travelAllowance) || 0);
-  const ded = Math.round(Number(values.lossOfPay) || 0);
+  const ded = Math.round(Number(values.lossOfPay) || 0) + Math.round(Number(values.professionalTax) || 0);
   const net = earn - ded;
 
   // FIX 3: fmt always produces whole number string
@@ -466,15 +468,17 @@ function SlipContent({ values, isNewJoinee }) {
               {fmt(values.basicSalary)}
             </td>
             <td style={{ ...vc, textAlign: "left" }}>Loss of Pay</td>
-            <td style={{ ...vc, textAlign: "right" }}>{fmt(ded)}</td>
+            <td style={{ ...vc, textAlign: "right" }}>{fmt(values.lossOfPay)}</td>
           </tr>
           <tr>
             <td style={{ ...vc, textAlign: "left" }}>Incentive Pay</td>
             <td style={{ ...vc, textAlign: "right" }}>
               {fmt(values.incentivePay)}
             </td>
-            <td style={vc} />
-            <td style={vc} />
+            <td style={{ ...vc, textAlign: "left" }}>Professional Tax</td>
+            <td style={{ ...vc, textAlign: "right" }}>
+              {fmt(values.professionalTax)}
+            </td>
           </tr>
           <tr>
             <td style={{ ...vc, textAlign: "left" }}>Travel Allowance</td>
@@ -1134,7 +1138,7 @@ export default function Page() {
     (Number(formik.values.basicSalary) || 0) +
     (Number(formik.values.incentivePay) || 0) +
     (Number(formik.values.travelAllowance) || 0);
-  const ded = Number(formik.values.lossOfPay) || 0;
+  const ded = (Number(formik.values.lossOfPay) || 0) + (Number(formik.values.professionalTax) || 0);
   const net = Math.round(earn - ded);
   const isUnknownId = fetchStatus === "notfound" && !isNewJoineeViaModal;
 
@@ -2122,6 +2126,14 @@ export default function Page() {
                 {field(
                   "travelAllowance",
                   "Travel Allowance (₹)",
+                  "number",
+                  true,
+                )}
+              </div>
+              <div className="mt-2.5 sm:mt-3">
+                {field(
+                  "professionalTax",
+                  "Professional Tax (₹)",
                   "number",
                   true,
                 )}
