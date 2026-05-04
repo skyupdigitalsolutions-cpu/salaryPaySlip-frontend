@@ -193,7 +193,7 @@ const validationSchema = Yup.object({
   payDays: Yup.number()
     .typeError("Must be a number")
     .min(0)
-    .required("Pay Days is required"),
+    .required("Total Days in Month is required"),
   lopDays: Yup.number()
     .typeError("Must be a number")
     .min(0)
@@ -240,7 +240,7 @@ function SlipContent({ values, isNewJoinee }) {
     Math.round(Number(values.incentivePay) || 0) +
     Math.round(Number(values.travelAllowance) || 0);
   const ded = Math.round(Number(values.lossOfPay) || 0) + Math.round(Number(values.professionalTax) || 0);
-  const net = earn - ded;
+  const net = Math.round(Number(values.basicSalary) || 0) - Math.round(Number(values.lossOfPay) || 0);
 
   // FIX 3: fmt always produces whole number string
   const fmt = (n) => Math.round(Number(n || 0)).toLocaleString("en-IN");
@@ -417,7 +417,7 @@ function SlipContent({ values, isNewJoinee }) {
           <tr>
             <td style={lc}>DESIGNATION</td>
             <td style={vc}>{values.designation || "—"}</td>
-            <td style={lc}>PAY DAYS</td>
+            <td style={lc}>TOTAL DAYS IN MONTH</td>
             <td style={vc}>{values.payDays || "—"}</td>
           </tr>
           <tr>
@@ -818,16 +818,21 @@ export default function Page() {
   // FIX 2: round lossOfPay to whole number
   useEffect(() => {
     const basic = Number(formik.values.basicSalary),
-      payDays = Number(formik.values.payDays),
+      payMonth = formik.values.payMonth,
       lopDays = Number(formik.values.lopDays);
-    if (basic > 0 && payDays > 0 && lopDays >= 0)
-      formik.setFieldValue(
-        "lossOfPay",
-        Math.round((basic / payDays) * lopDays),
-        false,
-      );
-    else if (lopDays === 0) formik.setFieldValue("lossOfPay", 0, false);
-  }, [formik.values.basicSalary, formik.values.payDays, formik.values.lopDays]);
+    if (payMonth) {
+      const date = new Date(payMonth + "-01");
+      const totalDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      formik.setFieldValue("payDays", totalDays, false);
+      if (basic > 0 && lopDays >= 0) {
+        formik.setFieldValue(
+          "lossOfPay",
+          Math.round((basic / totalDays) * lopDays),
+          false,
+        );
+      }
+    } else if (lopDays === 0) formik.setFieldValue("lossOfPay", 0, false);
+  }, [formik.values.basicSalary, formik.values.payMonth, formik.values.lopDays]);
 
   const handleNewEmployeeProceed = () => {
     const id = newEmpIdInput.trim().toUpperCase();
@@ -1087,7 +1092,8 @@ export default function Page() {
   const field = (name, label, type = "text", alwaysEditable = false) => {
     const isAutoField = AUTO_FIELDS.includes(name);
     const readOnly =
-      isAutoField && !isNewJoineeViaModal && !alwaysEditable && !isEditMode;
+      (isAutoField && !isNewJoineeViaModal && !alwaysEditable && !isEditMode) ||
+      name === "payDays";
     const isNewEntry = isAutoField && isNewJoinee && isNewJoineeViaModal;
     const isEditing = isAutoField && isEditMode && fetchStatus === "found";
 
@@ -2106,7 +2112,7 @@ export default function Page() {
                 Attendance
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                {field("payDays", "Pay Days", "number", true)}
+                {field("payDays", "Total Days in Month", "number", true)}
                 {field("lopDays", "LOP Days", "number", true)}
               </div>
             </div>

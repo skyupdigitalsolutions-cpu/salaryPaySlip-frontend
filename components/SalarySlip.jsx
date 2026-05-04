@@ -242,7 +242,7 @@ export const SalarySlipPreview = forwardRef(function SalarySlipPreview({ data, v
     (Number(data.incentivePay)    || 0) +
     (Number(data.travelAllowance) || 0);
   const totalDeduction = (Number(data.lossOfPay) || 0) + (Number(data.professionalTax) || 0);
-  const netSalary      = totalEarnings - totalDeduction;
+  const netSalary      = (Number(data.basicSalary) || 0) - (Number(data.lossOfPay) || 0);
 
   const payMonthLabel = data.payMonth
     ? new Date(data.payMonth + "-01").toLocaleDateString("en-IN", { month: "long", year: "numeric" })
@@ -321,7 +321,7 @@ export const SalarySlipPreview = forwardRef(function SalarySlipPreview({ data, v
               {[
                 ["Employee Name", data.employeeName||"—", "Bank Name",    data.bankName||"—"],
                 ["Employee ID",   data.employeeId  ||"—", "Bank A/C No",  data.bankAcNo||"—"],
-                ["Designation",   data.designation ||"—", "Pay Days",     data.payDays ||"—"],
+                ["Designation",   data.designation ||"—", "Total Days in Month",     data.payDays ||"—"],
                 ["Department",    data.department  ||"—", "LOP Days",     data.lopDays ||"—"],
                 ["Date of Joining", doj,                  "",             ""],
               ].map((row, i) => (
