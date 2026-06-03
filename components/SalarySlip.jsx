@@ -242,7 +242,7 @@ export const SalarySlipPreview = forwardRef(function SalarySlipPreview({ data, v
     (Number(data.incentivePay)    || 0) +
     (Number(data.travelAllowance) || 0);
   const totalDeduction = (Number(data.lossOfPay) || 0) + (Number(data.professionalTax) || 0);
-  const netSalary      = (Number(data.basicSalary) || 0) - (Number(data.lossOfPay) || 0);
+  const netSalary      = totalEarnings - totalDeduction;
 
   const payMonthLabel = data.payMonth
     ? new Date(data.payMonth + "-01").toLocaleDateString("en-IN", { month: "long", year: "numeric" })
