@@ -240,7 +240,7 @@ function SlipContent({ values, isNewJoinee }) {
     Math.round(Number(values.incentivePay) || 0) +
     Math.round(Number(values.travelAllowance) || 0);
   const ded = Math.round(Number(values.lossOfPay) || 0) + Math.round(Number(values.professionalTax) || 0);
-  const net = Math.round(Number(values.basicSalary) || 0) - Math.round(Number(values.lossOfPay) || 0);
+  const net = earn - ded;
 
   // FIX 3: fmt always produces whole number string
   const fmt = (n) => Math.round(Number(n || 0)).toLocaleString("en-IN");
